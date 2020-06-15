@@ -17,6 +17,7 @@ dependencies:
   - intake-xarray
   - hvplot 
   - gcsfs
+  - geoviews
   - pip:
       - cdsapi
 
