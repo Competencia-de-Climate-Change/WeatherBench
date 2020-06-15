@@ -13,6 +13,9 @@ dependencies:
   - seaborn
   - configargparse
   - tensorflow>=2.0
+  - intake
+  - intake-xarray
+  - hvplot 
   - pip:
       - cdsapi
 
