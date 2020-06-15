@@ -16,6 +16,7 @@ dependencies:
   - intake
   - intake-xarray
   - hvplot 
+  - gcsfs
   - pip:
       - cdsapi
 
