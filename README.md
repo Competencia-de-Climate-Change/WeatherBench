@@ -1,4 +1,4 @@
-# ORIGINAL README
+# New README
 
 To access new region's data in Colab:
 
@@ -14,6 +14,8 @@ import fsspec
 ds = xr.open_zarr(fsspec.get_mapper('gcs://weather-bench/region_zarr/'), consolidated=True)
 ds
 ```
+
+# ORIGINAL README
 ![Logo](https://github.com/ai4environment/WeatherBench/blob/master/figures/logo_text_left.png?raw=true)
 # WeatherBench: A benchmark dataset for data-driven weather forecasting
 
