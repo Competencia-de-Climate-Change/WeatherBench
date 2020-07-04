@@ -1,7 +1,19 @@
 # ORIGINAL README
 
+To access new region's data in Colab:
 
+```{python}
+!pip install xarray
+!pip install zarr
+!pip install fsspec
+!pip install gcsfs
 
+import xarray as xr
+import fsspec
+
+ds = xr.open_zarr(fsspec.get_mapper('gcs://weather-bench/region_zarr/'), consolidated=True)
+ds
+```
 ![Logo](https://github.com/ai4environment/WeatherBench/blob/master/figures/logo_text_left.png?raw=true)
 # WeatherBench: A benchmark dataset for data-driven weather forecasting
 
