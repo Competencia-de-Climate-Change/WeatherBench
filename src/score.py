@@ -4,23 +4,33 @@ Functions for evaluating forecasts.
 import numpy as np
 import xarray as xr
 
-def load_test_data(path, var, years=slice('2017', '2018')):
+def load_test_data(var, ds=None, path=None, years=slice('2017', '2018')):
     """
     Load the test dataset. If z return z500, if t return t850.
     Args:
+        ds: xarray dataset
         path: Path to nc files
         var: variable. Geopotential = 'z', Temperature = 't'
         years: slice for time window
-
     Returns:
         dataset: Concatenated dataset for 2017 and 2018
     """
-    ds = xr.open_mfdataset(f'{path}/*.nc', combine='by_coords')[var]
-    if var in ['z', 't']:
-        try:
-            ds = ds.sel(level=500 if var == 'z' else 850).drop('level')
-        except ValueError:
-            ds = ds.drop('level')
+    if (path is None) and (ds is None):
+        raise ValueError('Give ds or path')
+
+    if ds is None:
+        ds = xr.open_mfdataset(f'{path}/*.nc', combine='by_coords')[var]
+        if var in ['z', 't']:
+            try:
+                ds = ds.sel(level=500 if var == 'z' else 850).drop('level')
+            except ValueError:
+                ds = ds.drop('level')
+    elif path is None:
+        if var in ['z', 't']:
+            try:
+                ds = ds.sel(level=500 if var == 'z' else 850).drop('level')
+            except ValueError:
+                ds = ds.drop('level')    
     return ds.sel(time=years)
 
 def compute_weighted_rmse(da_fc, da_true, mean_dims=xr.ALL_DIMS):
