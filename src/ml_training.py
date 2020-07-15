@@ -1,5 +1,6 @@
 import numpy as np
 import xarray as xr
+from sklearn.metrics import mean_squared_error # 'neg_root_mean_squared_error'
 
 def load_test_data(var, ds=None, path=None, years=slice('2017', '2018')):
     """
