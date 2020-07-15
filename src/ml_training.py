@@ -53,8 +53,11 @@ def create_training_data(da, lead_time_h, return_valid_time=False, return_ds=Fal
 
 
 
-def train_regression(model, lead_time_h, input_vars, output_vars, data_subsample=1, extra_args=None):
+def train_regression(model, data, lead_time_h, input_vars, output_vars, data_subsample=1, extra_args=None):
     """Create data, train a linear regression and return the predictions."""
+    
+    data_train, data_test = data
+    
     X_train, y_train, X_test, y_test = [], [], [], []
     for v in input_vars:
         # Create Training Data for a lead_time_h prediction
