@@ -38,7 +38,9 @@ def create_training_data(da, lead_time_h, return_valid_time=False, return_ds=Fal
     X = da.isel(time=slice(0, -lead_time_h)) # Desde 0 hasta la ultima - 6 hrs
     y = da.isel(time=slice(lead_time_h, None)) # Desde 6 hasta la ultima hora
     valid_time = y.time
-
+    
+    _, nlat, nlon = da.shape
+    
     # Must be a "flat" array ==> nlat*nlon
     X_np = X.values.reshape(-1, nlat*nlon)
     y_np = y.values.reshape(-1, nlat*nlon)
