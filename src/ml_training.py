@@ -5,12 +5,15 @@ from sklearn.metrics import mean_squared_error # 'neg_root_mean_squared_error'
 def load_test_data(var, ds=None, path=None, years=slice('2017', '2018')):
     """
     Load the test dataset. If z return z500, if t return t850.
-    Args:
-        ds: xarray dataset
-        path: Path to nc files
-        var: variable. Geopotential = 'z', Temperature = 't'
-        years: slice for time window
+    
+    Parameters:
+    ----------
+        var (string) : variable name
+        ds (xr.Dataset) : dataset
+        path (string): Path to nc files 
+        years (slice): Time window
     Returns:
+    --------
         dataset: Concatenated dataset for 2017 and 2018
     """
     if (path is None) and (ds is None):
@@ -56,8 +59,26 @@ def create_training_data(da, lead_time_h, return_valid_time=False, return_ds=Fal
 
 
 
-def train_regression(model, data, lead_time_h, input_vars, output_vars, data_subsample=1, extra_args=None):
-    """Create data, train a linear regression and return the predictions."""
+def train_regression(model, data, lead_time_h, input_vars, output_vars, data_subsample=1, extra_args=None, verbose=False):
+    """
+    Create X and y, then train a linear regression and return the predictions.
+    
+    Params:
+    ------
+    model                : sklearn's object like model
+    data      (iterable) : Contains data_train, data_test, nlat, nlon, data_std, data_mean
+    lead_time_h    (int) : time between *now* and prediction time
+    input_var (iterable) : Contains strings of the input variable names
+    input_var (iterable) : Contains strings of the output variable names
+    data_subsample (int) : Subsample value
+    extra_args    (dict) : Extra arguments to be passed to the model
+    verbose       (bool) : Verbose level
+    
+    Returns:
+    -------
+    pred_ds (xr.Dataset) : predictions dataset
+    model_res   (object) : fitted model object
+    """
     
     data_train, data_test, nlat, nlon, data_std, data_mean  = data
     
@@ -82,45 +103,49 @@ def train_regression(model, data, lead_time_h, input_vars, output_vars, data_sub
         X_train = X_train[::data_subsample]
         y_train = y_train[::data_subsample]
     try:
-        lr = model(n_jobs=16, **extra_args)
+        model_res = model(n_jobs=16, **extra_args)
     except Exception:
-        lr = model(**extra_args)
-    lr.fit(X_train, y_train)
+        model_res = model(**extra_args)
+    model_res.fit(X_train, y_train)
     
-    mse_train = mean_squared_error(y_train, lr.predict(X_train))
-    mse_test = mean_squared_error(y_test, lr.predict(X_test))
+    mse_train = mean_squared_error(y_train, model_res.predict(X_train))
+    mse_test  = mean_squared_error(y_test,  model_res.predict(X_test))
 
-    print(f'Train MSE = {mse_train}')
-    print(f'Test MSE = {mse_test}')
+    if verbose:
+        print(f'Train MSE = {mse_train}')
+        print(f'Test  MSE = {mse_test}')
 
-    preds = lr.predict(X_test).reshape((-1, len(output_vars), nlat, nlon))
+    preds = model_res.predict(X_test).reshape((-1, len(output_vars), nlat, nlon))
     
     # Save predictions + unnormalize
     preds_ds = []
-    for i, v in enumerate(output_vars):
+    for idx, value in enumerate(output_vars):
         pred_array = xr.DataArray(
-            preds[:, i] * data_std[v].values + data_mean[v].values, 
+            preds[:, idx] * data_std[value].values + data_mean[value].values, 
             dims=['time', 'lat', 'lon'],
             coords={
                 'time': valid_time,
                 'lat': data_train.lat,
                 'lon': data_train.lon
             },
-            name=v
+            name=value
         )
         preds_ds.append(pred_array)
 
-    return xr.merge(preds_ds), lr
+    return xr.merge(preds_ds), model_res
 
 
 def compute_weighted_rmse(da_fc, da_true, mean_dims=xr.ALL_DIMS):
     """
     Compute the RMSE with latitude weighting from two xr.DataArrays.
-    Args:
+    
+    Parameters:
+    ----------
         y_fc (xr.DataArray): Forecast. Time coordinate must be validation time.
         y_true (xr.DataArray): Truth.
         mean_dims: dimensions over which to average score
     Returns:
+    -------
         rmse: Latitude weighted root mean squared error
     """
     error = da_fc - da_true
