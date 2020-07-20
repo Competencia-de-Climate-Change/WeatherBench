@@ -103,7 +103,7 @@ def train_regression(model, data, lead_time_h, input_vars, output_vars, data_sub
         X_train = X_train[::data_subsample]
         y_train = y_train[::data_subsample]
     try:
-        model_res = model(n_jobs=16, **extra_args)
+        model_res = model(n_jobs=-1, **extra_args)
     except Exception:
         model_res = model(**extra_args)
     model_res.fit(X_train, y_train)
