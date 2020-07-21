@@ -2,9 +2,9 @@
 
 [![Binder](https://binder.pangeo.io/badge_logo.svg)](https://binder.pangeo.io/v2/gh/Competencia-de-Climate-Change/WeatherBench/master)
 
-Using the repository and data for a personal ML project and in order to get acquainted with earth weather physics.
+DISCLAIMER: Using the repository and the Weatherbench dataset for a personal ML project and in order to get acquainted with weather related data.
 
-To access new region's data in Colab:
+To access a new region's data in Colab:
 
 ```{python}
 !pip install xarray
