@@ -1,5 +1,7 @@
 # New README
 
+[![Binder](https://binder.pangeo.io/badge_logo.svg)](https://binder.pangeo.io/v2/gh/Competencia-de-Climate-Change/WeatherBench/master)
+
 To access new region's data in Colab:
 
 ```{python}
