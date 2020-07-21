@@ -1,6 +1,8 @@
-# New README
+# README
 
 [![Binder](https://binder.pangeo.io/badge_logo.svg)](https://binder.pangeo.io/v2/gh/Competencia-de-Climate-Change/WeatherBench/master)
+
+Using the repository and data for a personal ML project and in order to get acquainted with earth weather physics.
 
 To access new region's data in Colab:
 
