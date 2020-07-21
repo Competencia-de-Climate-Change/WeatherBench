@@ -132,7 +132,7 @@ def train_regression(model, data, lead_time_h, input_vars, output_vars, data_sub
         )
         preds_ds.append(pred_array)
 
-    return xr.merge(preds_ds), model_res
+    return xr.merge(preds_ds), model_res, mse_train, mse_test
 
 
 def compute_weighted_rmse(da_fc, da_true, mean_dims=xr.ALL_DIMS):
