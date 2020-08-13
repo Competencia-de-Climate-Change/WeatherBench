@@ -58,19 +58,99 @@ def create_training_data(da, lead_time_h, return_valid_time=False, return_ds=Fal
     return X_np, y_np 
 
 
-
-def train_regression(model, data, lead_time_h, input_vars, output_vars, data_subsample=1, extra_args=None, verbose=False):
+def input_vars_train_test(input_vars, data, lead_time_h):
     """
-    Create X and y, then train a linear regression and return the predictions.
+    input_vars  (iterable) : Contains strings of the input variable names
+    data        (iterable) : Contains data_train ,data_test
+    lead_time_h    (int) : time between *now* and prediction time
+    """
+    data_train, data_test = data
+    
+    X_train, X_test = [], [], 
+    
+    for idx, v in enumerate(input_vars):
+        # Create Training Data for a lead_time_h prediction
+        X, _ = create_training_data(data_train[v], lead_time_h)
+        X_train.append(X)
+
+        # Create Test Data for a lead_time_h prediction
+        X, _, valid_time = create_training_data(data_test[v], lead_time_h, return_valid_time=True)
+        X_test.append(X)
+        
+    return X_train, X_test, valid_time
+
+def output_vars_train_test(output_vars, data, lead_time_h):
+    """
+    output_vars (iterable) : Contains strings of the output variable names
+    data        (iterable) : Contains data_train ,data_test
+    lead_time_h    (int) : time between *now* and prediction time
+    """
+    
+    y_train, y_test = [], []
+    data_train, data_test = data
+    for v in output_vars:
+        if v == '':
+            continue
+        
+        # Create Training Data for a lead_time_h prediction
+        _, y = create_training_data(data_train[v], lead_time_h)
+        y_train.append(y)
+            
+
+        # Create Test Data for a lead_time_h prediction
+        _, y, valid_time = create_training_data(data_test[v], lead_time_h, return_valid_time=True)
+        y_test.append(y)
+        
+    return y_train, y_test
+
+def create_X_y_time(input_vars, output_vars, data, lead_time, data_subsample=1):
+    """
+    Creates X, y and a valid datetime list from the given input_vars, output_vars.
+    
+    Raw data is in data = [data_train, data_test].
+    
+    Subsamples the X, y arrays if needed.
+    
+    Params:
+    ------
+    output_vars (iterable) : Contains strings of the output variable names
+    data        (iterable) : Contains data_train, data_test
+    lead_time_h    (int) : time between *now* and prediction time
+    data_subsample (int) : Subsample value
+    
+    Returns:
+    -------
+    X_train
+    y_train 
+    X_test 
+    y_test 
+    valid_time
+    """
+    old_out = output_vars
+    X_train, X_test, valid_time = input_vars_train_test(input_vars, data, lead_time)
+
+    y_train, y_test = output_vars_train_test(output_vars, data, lead_time)
+
+    # Add intercept
+    X_train, y_train, X_test, y_test = [np.concatenate(d, 1) for d in [X_train, y_train, X_test, y_test]]
+    
+    if data_subsample > 1:
+        X_train = X_train[::data_subsample]
+        y_train = y_train[::data_subsample]
+        
+    ouput_vars = old_out
+    return X_train, y_train, X_test, y_test, valid_time
+
+
+def train_regression(model, data, num_outputs, extra_args=None, verbose=False):
+    """
+    Train a linear regression and return the predictions.
     
     Params:
     ------
     model                : sklearn's object like model
-    data      (iterable) : Contains data_train, data_test, nlat, nlon, data_std, data_mean
-    lead_time_h    (int) : time between *now* and prediction time
-    input_var (iterable) : Contains strings of the input variable names
-    input_var (iterable) : Contains strings of the output variable names
-    data_subsample (int) : Subsample value
+    data      (iterable) : Contains X_train, y_train, X_test, y_test, nlat, nlon
+    num_outputs (int)    : Number of output variables
     extra_args    (dict) : Extra arguments to be passed to the model
     verbose       (bool) : Verbose level
     
@@ -78,30 +158,12 @@ def train_regression(model, data, lead_time_h, input_vars, output_vars, data_sub
     -------
     pred_ds (xr.Dataset) : predictions dataset
     model_res   (object) : fitted model object
+    mse_train            : mse_train 
+    mse_test             : mse_test
     """
     
-    data_train, data_test, nlat, nlon, data_std, data_mean  = data
+    X_train, y_train, X_test, y_test, nlat, nlon = data
     
-    X_train, y_train, X_test, y_test = [], [], [], []
-    for v in input_vars:
-        # Create Training Data for a lead_time_h prediction
-        X, y = create_training_data(data_train[v], lead_time_h)
-        X_train.append(X)
-
-        if v in output_vars: 
-            y_train.append(y)
-
-        # Create Test Data for a lead_time_h prediction
-        X, y, valid_time = create_training_data(data_test[v], lead_time_h, return_valid_time=True)
-        X_test.append(X)
-        
-        if v in output_vars: 
-            y_test.append(y)
-
-    X_train, y_train, X_test, y_test = [np.concatenate(d, 1) for d in [X_train, y_train, X_test, y_test]]
-    if data_subsample > 1:
-        X_train = X_train[::data_subsample]
-        y_train = y_train[::data_subsample]
     try:
         model_res = model(n_jobs=-1, **extra_args)
     except Exception:
@@ -114,9 +176,20 @@ def train_regression(model, data, lead_time_h, input_vars, output_vars, data_sub
     if verbose:
         print(f'Train MSE = {mse_train}')
         print(f'Test  MSE = {mse_test}')
-
-    preds = model_res.predict(X_test).reshape((-1, len(output_vars), nlat, nlon))
     
+    preds = model_res.predict(X_test).reshape((-1, num_outputs, nlat, nlon))
+    
+    return preds, model_res, mse_train, mse_test
+
+
+def unnormalize_preds(preds, output_vars, valid_time, lat_lon, data_std, data_mean):
+    """
+    output_vars (iterable) : Contains strings of the output variable names
+    valid_time (iterable): Contains a list with the predicted datetimes
+    lat_lon   (iterable) : Contains latitude and longitude arrays (coordinates)
+    data_std  (xarray object) : Contains output_vars std's
+    data_mean (xarray object) : Contains output_vars mean's
+    """
     # Save predictions + unnormalize
     preds_ds = []
     for idx, value in enumerate(output_vars):
@@ -125,16 +198,13 @@ def train_regression(model, data, lead_time_h, input_vars, output_vars, data_sub
             dims=['time', 'lat', 'lon'],
             coords={
                 'time': valid_time,
-                'lat': data_train.lat,
-                'lon': data_train.lon
+                'lat': lat_lon[0],
+                'lon': lat_lon[1]
             },
             name=value
         )
         preds_ds.append(pred_array)
-
-    return xr.merge(preds_ds), model_res, mse_train, mse_test
-
-
+    return xr.merge(preds_ds)
 def compute_weighted_rmse(da_fc, da_true, mean_dims=xr.ALL_DIMS):
     """
     Compute the RMSE with latitude weighting from two xr.DataArrays.
