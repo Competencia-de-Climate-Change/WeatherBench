@@ -19,6 +19,14 @@ ds = xr.open_zarr(fsspec.get_mapper('gcs://weather-bench/region_zarr/'), consoli
 ds
 ```
 
+## TODO:
+
+1. Termninar Regresion No Lineal
+2. Obtener resultados ordenados (graficos)
+3. Escribir Introduccion, Marco Teorico
+4. Comenzar Feedfordward Network
+5. ... informe?
+
 # ORIGINAL README
 ![Logo](https://github.com/ai4environment/WeatherBench/blob/master/figures/logo_text_left.png?raw=true)
 # WeatherBench: A benchmark dataset for data-driven weather forecasting
