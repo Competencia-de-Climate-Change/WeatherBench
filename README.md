@@ -26,7 +26,7 @@ ds
 3. Clustering
 4. Linear and Polynomial Regression
 5. Tree Methods
-6. Feed Fordward Neural Network
+6. Feedfordward Neural Network
 
 
 -----------------------------------------------------------------------------------------
