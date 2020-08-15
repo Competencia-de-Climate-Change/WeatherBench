@@ -19,13 +19,17 @@ ds = xr.open_zarr(fsspec.get_mapper('gcs://weather-bench/region_zarr/'), consoli
 ds
 ```
 
-## TODO:
+# Structure and Explanation
 
-1. Termninar Regresion No Lineal
-2. Obtener resultados ordenados (graficos)
-3. Escribir Introduccion, Marco Teorico
-4. Comenzar Feedfordward Network
-5. ... informe?
+1. Data Exploration
+2. Processing
+3. Clustering
+4. Linear and Polynomial Regression
+5. Tree Methods
+6. Feed Fordward Neural Network
+
+
+-----------------------------------------------------------------------------------------
 
 # ORIGINAL README
 ![Logo](https://github.com/ai4environment/WeatherBench/blob/master/figures/logo_text_left.png?raw=true)
