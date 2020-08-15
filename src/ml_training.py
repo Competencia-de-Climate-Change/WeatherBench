@@ -182,7 +182,7 @@ def train_regression(model, data, num_outputs, extra_args=None, verbose=False):
     return preds, model_res, mse_train, mse_test
 
 
-def unnormalize_preds(preds, output_vars, valid_time, lat_lon, data_std, data_mean):
+def unnormalize_preds(preds, output_vars, valid_time, lat_lon, data_std=None, data_mean=None, data_min=None, data_max=None):
     """
     output_vars (iterable) : Contains strings of the output variable names
     valid_time (iterable): Contains a list with the predicted datetimes
@@ -193,8 +193,14 @@ def unnormalize_preds(preds, output_vars, valid_time, lat_lon, data_std, data_me
     # Save predictions + unnormalize
     preds_ds = []
     for idx, value in enumerate(output_vars):
+        if data_std is not None and data_mean is not None:
+            vals = preds[:, idx] * data_std[value].values + data_mean[value].values
+        elif data_min is not None and data_max is not None:
+            vals = preds[:] * (data_max[value] - data_min[value]).values +  data_min[value].values
+        else:
+            vals = preds
         pred_array = xr.DataArray(
-            preds[:, idx] * data_std[value].values + data_mean[value].values, 
+            vals, 
             dims=['time', 'lat', 'lon'],
             coords={
                 'time': valid_time,
@@ -205,6 +211,7 @@ def unnormalize_preds(preds, output_vars, valid_time, lat_lon, data_std, data_me
         )
         preds_ds.append(pred_array)
     return xr.merge(preds_ds)
+
 def compute_weighted_rmse(da_fc, da_true, mean_dims=xr.ALL_DIMS):
     """
     Compute the RMSE with latitude weighting from two xr.DataArrays.
