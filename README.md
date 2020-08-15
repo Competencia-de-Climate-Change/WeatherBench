@@ -30,7 +30,7 @@ ds
 
 # Results
 
-Obtained results predicting $T850$ and $T2M$ for a lead time of 3 days.
+Obtained results predicting T850 and T2M for a lead time of 3 days.
 | Model | T850 RMSE (3 days) [K] | T2M RMSE (3 / 5 days) [K] | Notes | Reference |
 |--------------------|----------------------------------|----------------------------|----------------------|------------------|
 | ... | ...| ...| ...| ...|
